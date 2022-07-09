@@ -10,6 +10,9 @@ from urllib import request, error
 from urllib.parse import urlencode
 import time
 import re
+import math
+
+
 
 
 # lists to store specific data.
@@ -113,59 +116,29 @@ def get_data():
 
     data = pd.read_csv('C:\\Users\\nazih\Desktop\\ssl-project1\\templates\\data.csv')
 
-    # using numpy to generate 100 random lat 
     lat_res=[]
-    for index in range(len(data)):
-       lat_res.append(np.random.uniform(size=100, high = data.iloc[index,2]+ data.iloc[index,4], low= data.iloc[index,2]-data.iloc[index,4]))
-    
-    # converting our list to a pd df
-    user_csv= pd.DataFrame(lat_res)
-    # transpose our df
-    user_csv=user_csv.T
+    lng_res = []
 
-    # naming each column with the city name 
-    name= data['name']
-    # print('{}'.format(name[0]))
-
-    # a dict where to store our column heads
-    userdata={}
-    for index in range(len(data)):
-       userdata[name[index]] = user_csv.iloc[:,index]
-
-    # cenverting dict to pd df   
-    df_lat = pd.DataFrame(userdata)
-    df_lat_trans= df_lat.T
-    # adding a new coulmn 'id' 
-    df_lat_trans.insert(0, 'New_ID', range(0,len(df_lat_trans)))
-
-    # converting all coulmns to one coulmn
-    result_csv = pd.DataFrame({'lat': df_lat_trans.set_index(df_lat_trans.columns[0]).stack().reset_index(drop=True)})
-    
-    #  *********************************************************************
-    
-    # after creating random latitude values now time to generate longitude
-    lng_res=[]
+    # Equation for testing if a point is inside a circle
 
     for index in range(len(data)):
-        lng_res.append(np.random.uniform(size=100, high = data.iloc[index,3] + data.iloc[index,4], low= data.iloc[index,3]-data.iloc[index,4]))
+        for i in range(0,100):
+           while len(lat_res)!=5000 and len(lng_res)!=5000:
+                center_x =data.iloc[index,2]
+                center_y = data.iloc[index,3]
+                x = float(random.uniform(data.iloc[index,2]+ data.iloc[index,4], data.iloc[index,2]-data.iloc[index,4]))
+                y = float(random.uniform(data.iloc[index,3] + data.iloc[index,4], data.iloc[index,3]-data.iloc[index,4]))
+                radius= data.iloc[index,4]
+                square_dist = (center_x - x) ** 2 + (center_y - y) ** 2
+                if (square_dist <= radius ** 2) == True:
+                    lat_res.append(x)
+                    lng_res.append(y)
     
-    lng_result= pd.DataFrame(lng_res)
+    # converting our data to a pandas df
+    user_csv= pd.DataFrame(lat_res, columns= ['lat'])
+    lng_result= pd.DataFrame(lng_res, columns= ['lng'])
 
-    lng_csv= lng_result.T
- 
-    userdata1={}
-    for index in range(len(data)):
-        userdata1[name[index]] = lng_csv.iloc[:,index]
 
-    df_lng = pd.DataFrame(userdata1)
-
-    df_lng_trans=df_lng.T
-    
-    # adding a new id coulumn 
-    df_lng_trans.insert(0, 'New_ID', range(0,len(df_lng_trans)))
-
-    # after we creat our Id now we it's possible to create 1 coulmn from all the 50 coulmns 
-    csv_lng = pd.DataFrame({'lng': df_lng_trans.set_index(df_lng_trans.columns[0]).stack().reset_index(drop=True)})
      
     # ************************************************************************************
     # creating a new coulmn with the name city , and append city name from data file, acording to the lat and long value
@@ -182,9 +155,9 @@ def get_data():
     var1_csv= pd.DataFrame(var1,columns=['city'])       
 
     # concatinate our three data frame 
-    users_csv= pd.concat([result_csv,csv_lng,var1_csv], axis=1)
+    users_csv= pd.concat([user_csv, lng_result,var1_csv], axis=1)
      
-    # uploading our user file 
+    # uploading our user file with just emails in it 
 
     users_data = pd.read_csv('C:\\Users\\nazih\\Desktop\\ssl-project1\\templates\\users.csv')
    
@@ -192,16 +165,14 @@ def get_data():
     users= pd.concat([users_data,users_csv], axis=1)
 
     # saving our final result csv file in this format {email, lat, lng , city}
-    # users.to_csv(r'C:\\Users\\nazih\\Desktop\\ssl-project1\\templates\\users_data', index=False)
-
-
-
+    users.to_csv(r'C:\\Users\\nazih\\Desktop\\ssl-project1\\templates\\users_table.csv', index=False)
+    
 
 
 
 
 #              ***********************************************************************************************
-
+  
  # megrating out data to the database
       
 
@@ -253,7 +224,7 @@ def get_data():
     # open the csv file, save it in an object 
 
     cities_file= open('C:\\Users\\nazih\\Desktop\\ssl-project1\\templates\\data.csv')
-    users_file= open('C:\\Users\\nazih\\Desktop\\ssl-project1\\templates\\users_data.csv')
+    users_file= open('C:\\Users\\nazih\\Desktop\\ssl-project1\\templates\\users_table.csv')
 
 
     # upload to db
